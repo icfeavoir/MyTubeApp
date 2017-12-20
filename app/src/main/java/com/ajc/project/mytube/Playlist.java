@@ -1,14 +1,6 @@
 package com.ajc.project.mytube;
 
-import android.view.View;
-import android.widget.TextView;
-
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
-
-import static android.R.attr.min;
-import static android.R.id.list;
 
 /**
  * Created by pierre on 2017-12-14.
@@ -16,11 +8,10 @@ import static android.R.id.list;
 
 public class Playlist {
 
-    private Home home;
     private ArrayList<String> playlist;
     private int current;
 
-    Playlist(Home home){
+    Playlist(){
         this.playlist = new ArrayList<String>();
         this.current = -1;
     }
