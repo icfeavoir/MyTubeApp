@@ -1,8 +1,11 @@
 package com.ajc.project.mytube;
 
-import android.content.Context;
+import android.content.IntentFilter;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -16,18 +19,24 @@ import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+
 public class Home extends AppCompatActivity {
 
     Playlist playlist = new Playlist();
     Player player = new Player(this, playlist);
 
-    TextView status;
+    ArrayList<Integer> uniqueIDs = new ArrayList<>();
+    int currentUniqueID;
+
+    TextView status, connectionErrorMsg;
     Button playButton, pauseButton, searchButton, removeProps;
     EditText searchText;
     LinearLayout listProps, playlistLayout;
     SeekBar progressBar;
 
     Thread threadSearch;
+    NetworkStateReceiver networkStateReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +54,7 @@ public class Home extends AppCompatActivity {
         searchText = (EditText) findViewById(R.id.searchText);
 
         status = (TextView) findViewById(R.id.status);
+        connectionErrorMsg = (TextView) findViewById(R.id.connectionErrorMsg);
 
         progressBar = (SeekBar) findViewById(R.id.progressBar);
 
@@ -55,7 +65,12 @@ public class Home extends AppCompatActivity {
                 removePropositions();
             }
         });
+
+        // CONNECTION CHANGED LISTENER
+        registerReceiver(new NetworkStateReceiver(this), new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+
         this.uiButton("DEFAULT");
+        this.player.playlistPreparator();
 
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -122,7 +137,7 @@ public class Home extends AppCompatActivity {
                 JSONArray results = api.getData();
                 try{
                     for(int i=0; i<results.length(); i++){
-                        TextView prop = new TextView(it);
+                        final TextView prop = new TextView(it);
                         JSONObject video = results.getJSONObject(i);
                         final String TITLE = video.getString("title");
                         final String URL = video.getString("id");
@@ -131,6 +146,7 @@ public class Home extends AppCompatActivity {
                             @Override
                             public void onClick(View v) {
                                 runOnUiThread(new Runnable() {
+                                    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                                     @Override
                                     public void run() {
                                         addToPlaylist(URL, TITLE);
@@ -184,10 +200,22 @@ public class Home extends AppCompatActivity {
         music.setLayoutParams(params);
         music.setTextSize(20);
         music.setText(title);
+
+        final int uniqueID = View.generateViewId();
+        uniqueIDs.add(uniqueID);
+        music.setId(uniqueID);
         music.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                player.play(URL);
+                player.downloadAndPlay(URL);
+                // REMOVE COLOR OLD
+                findViewById(currentUniqueID).setBackgroundColor(getResources().getColor(R.color.white));
+                findViewById(currentUniqueID).invalidate();
+                // SET COLOR CURRENT
+                findViewById(uniqueID).setBackgroundColor(getResources().getColor(R.color.lightBlue));
+                findViewById(uniqueID).invalidate();
+                // SAVING CURRENT ID
+                currentUniqueID = uniqueID;
             }
         });
 
@@ -203,7 +231,10 @@ public class Home extends AppCompatActivity {
         this.playlistLayout.addView(line);
 
         if(this.playlist.getSize() == 1){
-            player.firstPlay(this.playlist.getNext());
+            this.currentUniqueID = this.uniqueIDs.get(0);
+            findViewById(this.uniqueIDs.get(0)).setBackgroundColor(getResources().getColor(R.color.lightBlue));
+            findViewById(this.uniqueIDs.get(0)).invalidate();
+            player.downloadAndPlay(this.playlist.getNext());
         }
     }
 
@@ -236,5 +267,9 @@ public class Home extends AppCompatActivity {
                 System.out.println("NO ACTION");
                 break;
         }
+    }
+
+    public void updateConectivityStatus(boolean status){
+        this.connectionErrorMsg.setVisibility(status ? View.INVISIBLE : View.VISIBLE);
     }
 }

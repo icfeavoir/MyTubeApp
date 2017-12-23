@@ -5,8 +5,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 
 import java.io.IOException;
-
-import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
+import java.util.ArrayList;
 
 /**
  * Created by pierre on 2017-12-20.
@@ -19,6 +18,7 @@ public class Player {
     private MediaPlayer mediaPlayer;
     private Playlist playlist;
 
+    private ArrayList<String> musicDownload = new ArrayList<>();
     private String currentMusic;
 
     Thread downloadThread;
@@ -42,13 +42,16 @@ public class Player {
             }
         };
         downloadThread.start();
+        this.musicDownload.add(url);
     }
 
-    public void firstPlay(String url){
-        // we download the music directly (first music)
+    public void downloadAndPlay(String url){
+        // we download the music directly
         downloadMusic(url);
         try {
             this.downloadThread.join();
+            this.currentMusic = url;
+            this.mediaPlayer = null;
             this.play(url);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -59,7 +62,11 @@ public class Player {
     public void play(String url){
         this.currentMusic = url;
         this.mediaPlayer = null;
-        this.play();
+        if(!this.isDownloaded(url)){
+            downloadAndPlay(url);
+        }else{
+            this.play();
+        }
     }
 
     public void play(){
@@ -141,5 +148,30 @@ public class Player {
             }
         };
         progressBar.start();
+    }
+
+    private boolean isDownloaded(String url){
+        return this.playlist.getPlaylist().contains(url);
+    }
+
+    public void playlistPreparator(){
+        Thread prepare = new Thread(){
+            @Override
+            public void run(){
+                while(true){
+                    for (String url: playlist.getPlaylist()) {
+                        if(!isDownloaded(url)){
+                            downloadMusic(url);
+                        }
+                    }
+                    try {
+                        this.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+        prepare.start();
     }
 }
