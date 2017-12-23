@@ -39,34 +39,28 @@ public class Player {
             public void run(){
                 Api downloadMusic = new Api("url", youtubeUrl);
                 downloadMusic.call();
+                home.musicDownloaded(youtubeUrl);
             }
         };
         downloadThread.start();
         this.musicDownload.add(url);
     }
 
-    public void downloadAndPlay(String url){
-        // we download the music directly
-        downloadMusic(url);
-        try {
-            this.downloadThread.join();
-            this.currentMusic = url;
-            this.mediaPlayer = null;
-            this.play(url);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            System.out.println("Cannot play music, problem with the download thread");
-        }
-    }
-
     public void play(String url){
         this.currentMusic = url;
-        this.mediaPlayer = null;
-        if(!this.isDownloaded(url)){
-            downloadAndPlay(url);
-        }else{
-            this.play();
+        if(this.mediaPlayer != null){
+            this.mediaPlayer.stop();
+            this.mediaPlayer = null;
         }
+        if(!this.isDownloaded(url)){
+            this.downloadMusic(url);
+            try {
+                this.downloadThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        this.play();
     }
 
     public void play(){
@@ -125,10 +119,6 @@ public class Player {
 
     }
 
-    public void loadMusic(){
-
-    }
-
     public void progressBarChanged(int progress){
         this.mediaPlayer.seekTo(progress);
     }
@@ -150,8 +140,8 @@ public class Player {
         progressBar.start();
     }
 
-    private boolean isDownloaded(String url){
-        return this.playlist.getPlaylist().contains(url);
+    public boolean isDownloaded(String url){
+        return this.musicDownload.contains(url);
     }
 
     public void playlistPreparator(){

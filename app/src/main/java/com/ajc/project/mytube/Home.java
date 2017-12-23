@@ -12,6 +12,7 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -20,6 +21,10 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import static android.R.attr.id;
 
 public class Home extends AppCompatActivity {
 
@@ -27,6 +32,7 @@ public class Home extends AppCompatActivity {
     Player player = new Player(this, playlist);
 
     ArrayList<Integer> uniqueIDs = new ArrayList<>();
+    Map<String, Integer> urlToID = new HashMap<>();
     int currentUniqueID;
 
     TextView status, connectionErrorMsg;
@@ -149,8 +155,8 @@ public class Home extends AppCompatActivity {
                                     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                                     @Override
                                     public void run() {
-                                        addToPlaylist(URL, TITLE);
                                         removePropositions();
+                                        addToPlaylist(URL, TITLE);
                                     }
                                 });
                             }
@@ -191,25 +197,30 @@ public class Home extends AppCompatActivity {
     protected void addToPlaylist(String url, String title){
         final String URL = url;
         playlist.add(URL, title);
-        TextView music = new TextView(this);
+        LinearLayout uniqueMusic = new LinearLayout(this);
+
+        uniqueMusic.setBackgroundColor(getResources().getColor(R.color.orange));
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
         params.setMargins(5, 10, 5, 10);
-        music.setLayoutParams(params);
+        uniqueMusic.setLayoutParams(params);
+
+        TextView music = new TextView(this);
         music.setTextSize(20);
         music.setText(title);
 
         final int uniqueID = View.generateViewId();
         uniqueIDs.add(uniqueID);
+        urlToID.put(URL, uniqueID);
         music.setId(uniqueID);
         music.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                player.downloadAndPlay(URL);
+            public void onClick(View v) {   // TODO: Change color if loaded or not.
+                player.play(URL);
                 // REMOVE COLOR OLD
-                findViewById(currentUniqueID).setBackgroundColor(getResources().getColor(R.color.white));
+                findViewById(currentUniqueID).setBackgroundColor(player.isDownloaded(URL) ? getResources().getColor(R.color.green) :  getResources().getColor(R.color.orange));
                 findViewById(currentUniqueID).invalidate();
                 // SET COLOR CURRENT
                 findViewById(uniqueID).setBackgroundColor(getResources().getColor(R.color.lightBlue));
@@ -227,15 +238,55 @@ public class Home extends AppCompatActivity {
         lineParams.setMargins(0, 10, 0, 10);
         line.setLayoutParams(lineParams);
         line.setBackgroundColor(Color.parseColor("#000000"));
-        this.playlistLayout.addView(music);
+
+        ImageButton remove = new ImageButton(this);
+        remove.setBackgroundResource(R.drawable.close);
+        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(
+                50,
+                50
+        );
+        remove.setLayoutParams(imageParams);
+        remove.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                removeFromPlaylist(URL);
+            }
+        });
+
+        uniqueMusic.addView(music);
+        uniqueMusic.addView(remove);
+        this.playlistLayout.addView(uniqueMusic);
         this.playlistLayout.addView(line);
 
         if(this.playlist.getSize() == 1){
             this.currentUniqueID = this.uniqueIDs.get(0);
-            findViewById(this.uniqueIDs.get(0)).setBackgroundColor(getResources().getColor(R.color.lightBlue));
-            findViewById(this.uniqueIDs.get(0)).invalidate();
-            player.downloadAndPlay(this.playlist.getNext());
         }
+    }
+
+    public void removeFromPlaylist(String url){
+        int id = urlToID.get(url);
+        ((LinearLayout) findViewById(id).getParent()).removeAllViews();
+        int indexInArray = this.playlist.getPlaylist().indexOf(url);
+        this.playlist.remove(indexInArray);
+    }
+
+    public void musicDownloaded(String url){
+        final String URL = url;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                int id = urlToID.get(URL);
+                // CHANGE COLOR TO LOADED
+                if(playlist.getSize() == 1){
+                    player.play(URL);
+                    findViewById(currentUniqueID).setBackgroundColor(getResources().getColor(R.color.lightBlue));
+                    findViewById(currentUniqueID).invalidate();
+                }else {
+                    findViewById(id).setBackgroundColor(getResources().getColor(R.color.green));
+                    findViewById(id).invalidate();
+                }
+            }
+        });
     }
 
     public void setProgressBar(int val){

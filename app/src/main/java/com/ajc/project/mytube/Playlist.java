@@ -21,6 +21,9 @@ public class Playlist {
     }
     public void remove(int index){
         this.playlist.remove(index);
+        for(int i=index; i<this.playlist.size()-1; i++){
+            this.playlist.set(i, this.playlist.get(i+1));
+        }
     }
 
     public int getSize(){
