@@ -15,25 +15,31 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-import static android.R.attr.key;
-
-class Api {
+class YoutubeApi {
     private static final String API_URL = "http://54.213.9.163/mytube/";
-    private String videoUrl;
+    private Map<String, Object> data;
     private String endpoint;
+    private int my_id;
 
-    Api(String endpoint, String videoUrl) {
-        this.videoUrl = videoUrl;
+    YoutubeApi(String endpoint, Map<String, Object> data) {
+        this.data = data;
         this.endpoint = endpoint;
+        this.my_id = 1;
+    }
+    YoutubeApi(String endpoint) {
+        this(endpoint, new HashMap<String, Object>());
+    }
+
+    void addData(String key, Object value) {
+        this.data.put(key, value);
     }
 
     public JSONArray getData() {
         JSONArray json = new JSONArray();
         try {
-            System.out.println("Started");
-            String resp = new CallAPI(API_URL, this.endpoint, this.videoUrl).execute().get();
+            String resp = new CallAPI(API_URL, endpoint, data, my_id).execute().get();
+            System.out.println(resp);
             json = new JSONArray(resp);
-            System.out.println(json);
         } catch (Exception e) {
             System.out.println("No JSON");
             e.printStackTrace();
@@ -51,10 +57,14 @@ class CallAPI extends AsyncTask<String, String, String> {
     private String apiUrl;
     private String data;
 
-    public CallAPI(String apiUrl, String endpoint, String videoUrl){
+    public CallAPI(String apiUrl, String endpoint, Map<String, Object> data, int my_id){
         this.apiUrl = apiUrl;
+        String postData = "";
         try {
-            this.data = URLEncoder.encode(endpoint, "UTF-8") + "=" + URLEncoder.encode(videoUrl, "UTF-8");
+            this.data = URLEncoder.encode("endpoint", "UTF-8") + "=" + URLEncoder.encode(endpoint, "UTF-8");
+            for (Map.Entry<String, Object> entry : data.entrySet()){
+                this.data += "&" + URLEncoder.encode(entry.getKey(), "UTF-8") + "=" + URLEncoder.encode(entry.getValue().toString(), "UTF-8");
+            }
         }catch(Exception e){
             System.out.println("NO DATA");
         }
@@ -96,49 +106,6 @@ class CallAPI extends AsyncTask<String, String, String> {
                 reader.close();
             }catch(Exception ex) {}
         }
-        return text;
-    }
-}
-
-class YoutubeSearch extends AsyncTask<String, String, String>{
-    private String search;
-
-    public YoutubeSearch(String search){
-        this.search = search;
-    }
-
-    @Override
-    protected String doInBackground(String... params) {
-        String text = "";
-        BufferedReader reader = null;
-        try{
-            URL url = new URL("https://www.youtube.com/results?search_query="+this.search+"&pbj=1");
-
-            // Send POST data request
-            URLConnection conn = url.openConnection();
-            conn.setDoOutput(true);
-            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-            wr.flush();
-
-            // Get the server response
-            reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            StringBuilder sb = new StringBuilder();
-            String line = null;
-
-            // Read Server Response
-            while((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
-            }
-            text = sb.toString();
-        }catch(Exception e){
-            e.printStackTrace();
-        }finally{
-            try{
-                reader.close();
-            }catch(Exception ex) {}
-        }
-        System.out.println("YOUTUBE RESPONSE");
-        System.out.println(text);
         return text;
     }
 }

@@ -6,6 +6,7 @@ import android.net.Uri;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by pierre on 2017-12-20.
@@ -37,9 +38,14 @@ public class Player {
         this.downloadThread = new Thread(){
             @Override
             public void run(){
-                Api downloadMusic = new Api("url", youtubeUrl);
-                downloadMusic.call();
-                home.musicDownloaded(youtubeUrl);
+                try {
+                    YoutubeApi api = new YoutubeApi("url");
+                    api.addData("url", youtubeUrl);
+                    api.call();
+                    home.musicDownloaded(youtubeUrl);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         };
         downloadThread.start();

@@ -6,16 +6,22 @@ import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -27,15 +33,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /* TODO:
-    - Search not in backend!
     - Notification Player
     - OnLock Player
-    - Left Menu
     - Params View
-    - Playlist Saver
+    - Playlist Manager!
     - Loop & Shuffle
 */
 public class Home extends AppCompatActivity {
+    private DrawerLayout drawerLayout;
+    private String[] drawerItemsList;
+    private ListView myDrawer;
 
     Playlist playlist = new Playlist();
     Player player = new Player(this, playlist);
@@ -51,12 +58,26 @@ public class Home extends AppCompatActivity {
     SeekBar progressBar;
 
     Thread threadSearch;
-    NetworkStateReceiver networkStateReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
+        // DRAWER (MENU)
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerItemsList = getResources().getStringArray(R.array.items);
+        myDrawer = (ListView) findViewById(R.id.my_drawer);
+        myDrawer.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_line, drawerItemsList));
+        myDrawer.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                System.out.println(position);
+                }
+            }
+        );
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu);
 
         listProps = (LinearLayout) findViewById(R.id.propositionsList);
         playlistLayout = (LinearLayout) findViewById(R.id.playlist);
@@ -148,9 +169,11 @@ public class Home extends AppCompatActivity {
             @Override
             public void run(){
                 String search = searchText.getText().toString();
-                Api api = new Api("search", search);
-                JSONArray results = api.getData();
-                try{
+                JSONArray results = null;
+                try {
+                    YoutubeApi api = new YoutubeApi("search");
+                    api.addData("search", search);
+                    results = api.getData();
                     for(int i=0; i<results.length(); i++){
                         final TextView prop = new TextView(it);
                         JSONObject video = results.getJSONObject(i);
@@ -339,5 +362,13 @@ public class Home extends AppCompatActivity {
 
     public void updateConectivityStatus(boolean status){
         this.connectionErrorMsg.setVisibility(status ? View.INVISIBLE : View.VISIBLE);
+        this.searchButton.setEnabled(status);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle home icon selection
+        drawerLayout.openDrawer(Gravity.LEFT);
+        return true;
     }
 }
