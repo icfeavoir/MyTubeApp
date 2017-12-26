@@ -9,7 +9,9 @@ import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -24,8 +26,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static android.R.attr.id;
-
+/* TODO:
+    - Search not in backend!
+    - Notification Player
+    - OnLock Player
+    - Left Menu
+    - Params View
+    - Playlist Saver
+    - Loop & Shuffle
+*/
 public class Home extends AppCompatActivity {
 
     Playlist playlist = new Playlist();
@@ -197,27 +206,34 @@ public class Home extends AppCompatActivity {
     protected void addToPlaylist(String url, String title){
         final String URL = url;
         playlist.add(URL, title);
-        LinearLayout uniqueMusic = new LinearLayout(this);
 
-        uniqueMusic.setBackgroundColor(getResources().getColor(R.color.orange));
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+        LinearLayout musicLayout = new LinearLayout(this);
+        musicLayout.setOrientation(LinearLayout.HORIZONTAL);
+        musicLayout.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        params.setMargins(5, 10, 5, 10);
-        uniqueMusic.setLayoutParams(params);
+        ));
 
+        // MUSIC TITLE
         TextView music = new TextView(this);
+        LinearLayout.LayoutParams musicParams = new LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                90
+        );
+        music.setLayoutParams(musicParams);
+        music.setPadding(0, 5, 5, 5);
         music.setTextSize(20);
         music.setText(title);
 
         final int uniqueID = View.generateViewId();
         uniqueIDs.add(uniqueID);
         urlToID.put(URL, uniqueID);
+
         music.setId(uniqueID);
         music.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {   // TODO: Change color if loaded or not.
+            public void onClick(View v) {
                 player.play(URL);
                 // REMOVE COLOR OLD
                 findViewById(currentUniqueID).setBackgroundColor(player.isDownloaded(URL) ? getResources().getColor(R.color.green) :  getResources().getColor(R.color.orange));
@@ -230,22 +246,17 @@ public class Home extends AppCompatActivity {
             }
         });
 
-        View line = new View(this);
-        LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                5
-        );
-        lineParams.setMargins(0, 10, 0, 10);
-        line.setLayoutParams(lineParams);
-        line.setBackgroundColor(Color.parseColor("#000000"));
-
+        // TRASH
         ImageButton remove = new ImageButton(this);
-        remove.setBackgroundResource(R.drawable.close);
-        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams removeParams = new LinearLayout.LayoutParams(
                 50,
-                50
+                50,
+                10
         );
-        remove.setLayoutParams(imageParams);
+        removeParams.gravity = Gravity.RIGHT;
+        remove.setLayoutParams(removeParams);
+        remove.setForegroundGravity(Gravity.CENTER);
+        remove.setBackgroundResource(R.drawable.close);
         remove.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -253,9 +264,15 @@ public class Home extends AppCompatActivity {
             }
         });
 
-        uniqueMusic.addView(music);
-        uniqueMusic.addView(remove);
-        this.playlistLayout.addView(uniqueMusic);
+        // LINE
+        View line = new View(this);
+        LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1);
+        line.setLayoutParams(lineParams);
+        line.setBackgroundColor(Color.parseColor("#000000"));
+
+        musicLayout.addView(music);
+        musicLayout.addView(remove);
+        this.playlistLayout.addView(musicLayout);
         this.playlistLayout.addView(line);
 
         if(this.playlist.getSize() == 1){

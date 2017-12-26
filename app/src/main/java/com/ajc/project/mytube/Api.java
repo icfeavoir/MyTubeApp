@@ -99,3 +99,46 @@ class CallAPI extends AsyncTask<String, String, String> {
         return text;
     }
 }
+
+class YoutubeSearch extends AsyncTask<String, String, String>{
+    private String search;
+
+    public YoutubeSearch(String search){
+        this.search = search;
+    }
+
+    @Override
+    protected String doInBackground(String... params) {
+        String text = "";
+        BufferedReader reader = null;
+        try{
+            URL url = new URL("https://www.youtube.com/results?search_query="+this.search+"&pbj=1");
+
+            // Send POST data request
+            URLConnection conn = url.openConnection();
+            conn.setDoOutput(true);
+            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+            wr.flush();
+
+            // Get the server response
+            reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder sb = new StringBuilder();
+            String line = null;
+
+            // Read Server Response
+            while((line = reader.readLine()) != null) {
+                sb.append(line + "\n");
+            }
+            text = sb.toString();
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            try{
+                reader.close();
+            }catch(Exception ex) {}
+        }
+        System.out.println("YOUTUBE RESPONSE");
+        System.out.println(text);
+        return text;
+    }
+}
