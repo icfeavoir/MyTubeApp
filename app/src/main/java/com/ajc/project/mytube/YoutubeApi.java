@@ -61,10 +61,15 @@ class CallAPI extends AsyncTask<String, String, String> {
         this.apiUrl = apiUrl;
         String postData = "";
         try {
-            this.data = URLEncoder.encode("endpoint", "UTF-8") + "=" + URLEncoder.encode(endpoint, "UTF-8");
             for (Map.Entry<String, Object> entry : data.entrySet()){
-                this.data += "&" + URLEncoder.encode(entry.getKey(), "UTF-8") + "=" + URLEncoder.encode(entry.getValue().toString(), "UTF-8");
+                if(postData != ""){
+                    postData += "&";
+                }
+                postData += URLEncoder.encode(entry.getKey(), "UTF-8") + "=" + URLEncoder.encode(entry.getValue().toString(), "UTF-8");
             }
+            this.data = URLEncoder.encode("endpoint", "UTF-8") + "=" + URLEncoder.encode(endpoint, "UTF-8");
+//            this.data += "&"+URLEncoder.encode("my_id", "UTF-8") + "=" + URLEncoder.encode(""+my_id, "UTF-8");
+            this.data += "&"+URLEncoder.encode("data", "UTF-8") + "=" + URLEncoder.encode(postData, "UTF-8");
         }catch(Exception e){
             System.out.println("NO DATA");
         }

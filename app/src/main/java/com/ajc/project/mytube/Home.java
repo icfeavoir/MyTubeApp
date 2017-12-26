@@ -171,7 +171,7 @@ public class Home extends AppCompatActivity {
                 String search = searchText.getText().toString();
                 JSONArray results = null;
                 try {
-                    YoutubeApi api = new YoutubeApi("search");
+                    YoutubeApi api = new YoutubeApi("endpoint/search");
                     api.addData("search", search);
                     results = api.getData();
                     for(int i=0; i<results.length(); i++){

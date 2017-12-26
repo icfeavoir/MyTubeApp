@@ -39,7 +39,7 @@ public class Player {
             @Override
             public void run(){
                 try {
-                    YoutubeApi api = new YoutubeApi("url");
+                    YoutubeApi api = new YoutubeApi("endpoint/download");
                     api.addData("url", youtubeUrl);
                     api.call();
                     home.musicDownloaded(youtubeUrl);
