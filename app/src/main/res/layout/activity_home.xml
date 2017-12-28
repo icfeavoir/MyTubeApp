@@ -55,7 +55,6 @@
                             android:layout_height="wrap_content"
                             android:layout_below="@+id/status"
                             android:text="Play"/>
-
                         <Button
                             android:id="@+id/pausePlayerBtn"
                             android:layout_width="wrap_content"
@@ -63,6 +62,13 @@
                             android:layout_below="@+id/status"
                             android:layout_toRightOf="@+id/startPlayerBtn"
                             android:text="Pause"/>
+                        <Button
+                            android:id="@+id/savePlaylist"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Save"
+                            android:layout_below="@+id/status"
+                            android:layout_toRightOf="@+id/pausePlayerBtn"/>
 
                         <SeekBar
                             android:id="@+id/progressBar"
@@ -79,6 +85,7 @@
                             android:orientation="vertical"
                             android:layout_below="@+id/progressBar">
                             <TextView
+                                android:id="@+id/playlistTitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Playlist"

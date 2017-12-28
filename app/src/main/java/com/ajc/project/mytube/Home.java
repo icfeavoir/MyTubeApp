@@ -1,5 +1,7 @@
 package com.ajc.project.mytube;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
@@ -8,10 +10,12 @@ import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,13 +28,18 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import static android.R.attr.duration;
+import static android.R.attr.positiveButtonText;
 
 /* TODO:
     - Notification Player
@@ -40,8 +49,10 @@ import java.util.Map;
     - Loop & Shuffle
 */
 public class Home extends AppCompatActivity {
+    final int ME = 1;
+
     private DrawerLayout drawerLayout;
-    private String[] drawerItemsList;
+    private ArrayList<String> drawerItemsList = new ArrayList<>();
     private ListView myDrawer;
 
     Playlist playlist = new Playlist();
@@ -49,10 +60,11 @@ public class Home extends AppCompatActivity {
 
     ArrayList<Integer> uniqueIDs = new ArrayList<>();
     Map<String, Integer> urlToID = new HashMap<>();
+    Map<String, String> urlToTitle = new HashMap<>();
     int currentUniqueID;
 
-    TextView status, connectionErrorMsg;
-    Button playButton, pauseButton, searchButton, removeProps;
+    TextView status, connectionErrorMsg, playlistTitleView;
+    Button playButton, pauseButton, searchButton, removeProps, savePlaylist;
     EditText searchText;
     LinearLayout listProps, playlistLayout;
     SeekBar progressBar;
@@ -65,17 +77,37 @@ public class Home extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         // DRAWER (MENU)
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawerItemsList = getResources().getStringArray(R.array.items);
+        final Context IT = this;
         myDrawer = (ListView) findViewById(R.id.my_drawer);
-        myDrawer.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_line, drawerItemsList));
-        myDrawer.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                System.out.println(position);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerLayout.setDrawerListener(new ActionBarDrawerToggle(this, drawerLayout, R.string.navigation_drawer_open, R.string.navigation_drawer_close){
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                // get all playlists
+                YoutubeApi api = new YoutubeApi("Playlists/select");
+                api.addData("creator", ME);
+                JSONArray playlistsJson = api.getData();
+                for(int i=0; i<playlistsJson.length(); i++){
+                    try {
+                        String playlistTitle = playlistsJson.getJSONObject(i).getString("title");
+                        // add only if this playlist not added yet
+                        if(drawerItemsList.size() < i+1 || !drawerItemsList.get(i).equals(playlistTitle)) {
+                            drawerItemsList.add(playlistTitle);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
+                myDrawer.setAdapter(new ArrayAdapter<String>(IT, R.layout.drawer_line, drawerItemsList));
+                myDrawer.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                            System.out.println(position);
+                        }
+                    }
+                );
             }
-        );
+        });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu);
 
@@ -86,11 +118,13 @@ public class Home extends AppCompatActivity {
         pauseButton = (Button)findViewById(R.id.pausePlayerBtn);
         searchButton = (Button) findViewById(R.id.searchBtn);
         removeProps = (Button) findViewById(R.id.removePropositions);
+        savePlaylist = (Button) findViewById(R.id.savePlaylist);
 
         searchText = (EditText) findViewById(R.id.searchText);
 
         status = (TextView) findViewById(R.id.status);
         connectionErrorMsg = (TextView) findViewById(R.id.connectionErrorMsg);
+        playlistTitleView = (TextView) findViewById(R.id.playlistTitle);
 
         progressBar = (SeekBar) findViewById(R.id.progressBar);
 
@@ -139,6 +173,13 @@ public class Home extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 searchMusic();
+            }
+        });
+
+        savePlaylist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                savePlaylist();
             }
         });
 
@@ -227,6 +268,9 @@ public class Home extends AppCompatActivity {
     }
 
     protected void addToPlaylist(String url, String title){
+        // rename playlist title (because its not a saved playlist)
+        playlistTitleView.setText("Playlist");
+
         final String URL = url;
         playlist.add(URL, title);
 
@@ -252,6 +296,7 @@ public class Home extends AppCompatActivity {
         final int uniqueID = View.generateViewId();
         uniqueIDs.add(uniqueID);
         urlToID.put(URL, uniqueID);
+        urlToTitle.put(URL, title);
 
         music.setId(uniqueID);
         music.setOnClickListener(new View.OnClickListener() {
@@ -324,6 +369,58 @@ public class Home extends AppCompatActivity {
                 }else {
                     findViewById(id).setBackgroundColor(getResources().getColor(R.color.green));
                     findViewById(id).invalidate();
+                }
+            }
+        });
+    }
+
+    public void savePlaylist(){
+        // DIALOG FOR TITLE
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+        View view = inflater.inflate(R.layout.popup, null);
+        final EditText TITLE_FIELD = view.findViewById(R.id.popupTitle);
+        final ArrayList<String> PLAYLIST = this.playlist.getPlaylist();
+        final Context IT = this;
+        builder.setView(view);
+        builder.setPositiveButton("ok", null);
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+            }
+        });
+        final AlertDialog dialog = builder.create();
+        dialog.show();
+
+        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String title = TITLE_FIELD.getText().toString();
+                if(title.equals("")){
+                    Toast toast = Toast.makeText(IT, "Please enter a title", Toast.LENGTH_LONG);
+                    toast.show();
+                    return;
+                }else {
+                    YoutubeApi api = new YoutubeApi("playlists/insert");
+                    api.addData("creator", 1);
+                    api.addData("title", title);
+                    try {
+                        int playlist_id = (int) api.getData().get(0);
+                        for (String url : PLAYLIST) {
+                            api = new YoutubeApi("PlaylistItems/insert");
+                            api.addData("playlist_id", playlist_id);
+                            api.addData("creator", 1);
+                            api.addData("title", urlToTitle.get(url));
+                            api.addData("url", url);
+                            api.call();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    dialog.dismiss();
+                    Toast toast = Toast.makeText(IT, "Playlist saved", Toast.LENGTH_SHORT);
+                    toast.show();
+                    playlistTitleView.setText(title);
                 }
             }
         });

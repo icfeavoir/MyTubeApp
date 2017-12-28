@@ -74,7 +74,7 @@ public class Player {
         if(this.mediaPlayer == null){
             this.home.setProgressBar(0);
             mediaPlayer = new MediaPlayer();
-            Uri myUri = Uri.parse(API_URL+this.currentMusic+".mp3");
+            Uri myUri = Uri.parse(API_URL+"src/music/"+this.currentMusic+".mp3");
             try {
                 mediaPlayer.setDataSource(home, myUri);
                 mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
