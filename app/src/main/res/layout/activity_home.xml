@@ -22,7 +22,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:width="200dp"
-                    android:text="Riles"/>
+                    android:text=""/>
 
                 <Button
                     android:id="@+id/searchBtn"
@@ -78,18 +78,19 @@
                             android:layout_marginRight="15dp"
                             android:layout_below="@id/pausePlayerBtn"/>
 
+                        <TextView
+                            android:id="@+id/playlistTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/progressBar"
+                            android:text="Playlist"
+                            android:textSize="30dp"/>
                         <LinearLayout
                             android:id="@+id/playlist"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:layout_below="@+id/progressBar">
-                            <TextView
-                                android:id="@+id/playlistTitle"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Playlist"
-                                android:textSize="30dp"/>
+                            android:layout_below="@+id/playlistTitle">
                         </LinearLayout>
                     </RelativeLayout>
 

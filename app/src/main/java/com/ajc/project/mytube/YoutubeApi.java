@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 class YoutubeApi {
-    private static final String API_URL = "http://54.213.9.163/mytube/";
+    private static final String API_URL = "http://icfeavoir.ddns.net/mytube/";
     private Map<String, Object> data;
     private String endpoint;
     private int my_id;
@@ -32,6 +32,10 @@ class YoutubeApi {
 
     void addData(String key, Object value) {
         this.data.put(key, value);
+    }
+
+    static String getAPIURL(){
+        return API_URL;
     }
 
     public JSONArray getData() {

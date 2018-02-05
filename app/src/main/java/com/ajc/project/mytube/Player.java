@@ -6,14 +6,13 @@ import android.net.Uri;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by pierre on 2017-12-20.
  */
 
 public class Player {
-    private static final String API_URL = "http://54.213.9.163/mytube/";
+    private static final String API_URL = YoutubeApi.getAPIURL();
 
     private Home home;
     private MediaPlayer mediaPlayer;
@@ -123,6 +122,10 @@ public class Player {
 
     public void playPrev(){
 
+    }
+
+    public void removeAll(){
+        this.musicDownload.clear();
     }
 
     public void progressBarChanged(int progress){

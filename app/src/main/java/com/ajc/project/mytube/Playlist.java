@@ -1,5 +1,7 @@
 package com.ajc.project.mytube;
 
+import android.content.SharedPreferences;
+
 import java.util.ArrayList;
 
 /**
@@ -8,22 +10,44 @@ import java.util.ArrayList;
 
 public class Playlist {
 
+    private Home home;
+    private SharedPreferences.Editor editor;
     private ArrayList<String> playlist;
     private int current;
 
-    Playlist(){
+    Playlist(Home home){
+        this.home = home;
         this.playlist = new ArrayList<String>();
         this.current = -1;
     }
 
+    public void setPreferences(SharedPreferences.Editor editor){
+        this.editor = editor;
+    }
+
     public void add(final String url, String musicName){
+        this.editor.putString("url_"+this.getSize(), url);
+        this.editor.putString("title_"+this.getSize(), musicName);
+        this.editor.commit();
         this.playlist.add(url);
     }
     public void remove(int index){
+        this.editor.clear();
+        this.editor.commit();
         this.playlist.remove(index);
+        String url;
         for(int i=index; i<this.playlist.size()-1; i++){
-            this.playlist.set(i, this.playlist.get(i+1));
+            url = this.playlist.get(i+1);
+            this.playlist.set(i, url);
+            this.editor.putString("url_"+i, url);
+            this.editor.putString("title_"+i, this.home.urlToTitle.get(url));
+            this.editor.commit();
         }
+    }
+    public void removeAll(){
+        this.playlist.clear();
+        this.editor.clear();
+        this.editor.commit();
     }
 
     public int getSize(){
